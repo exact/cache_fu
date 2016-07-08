@@ -156,8 +156,18 @@ module ActsAsCached
 
       args = [cache_id]
       args << cache_options.dup unless cache_options.blank?
-      send(finder, *args)
+      build_arel_from_hash(*args).first
     end
+
+    def build_arel_from_hash(id, options={})
+      query = self.where(self.primary_key => id)
+      options.each do |key, value|
+        key = :includes if key == :include
+        query = query.send(key, value)
+      end
+      query
+    end
+    private :build_arel_from_hash
 
     def cache_namespace
       Rails.cache.respond_to?(:namespace) ? Rails.cache.namespace : ActsAsCached.config[:namespace]
